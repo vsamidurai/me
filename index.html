@@ -363,6 +363,67 @@
         .delay-4 { animation-delay: 0.5s; }
         .delay-5 { animation-delay: 0.65s; }
         .delay-6 { animation-delay: 0.8s; }
+
+        /* Glitch Reverse Text Effect */
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+        }
+
+        .glitch-text::before,
+        .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+        }
+
+        .glitch-text.active::before {
+            color: #ff0040;
+            animation: glitchText1 0.3s ease-in-out;
+            clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+        }
+
+        .glitch-text.active::after {
+            color: #00ffff;
+            animation: glitchText2 0.3s ease-in-out;
+            clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+        }
+
+        @keyframes glitchText1 {
+            0%, 100% { opacity: 0; transform: translate(0); }
+            20% { opacity: 0.8; transform: translate(-3px, -2px); }
+            40% { opacity: 0.8; transform: translate(3px, 2px); }
+            60% { opacity: 0.8; transform: translate(-2px, 1px); }
+            80% { opacity: 0.8; transform: translate(2px, -1px); }
+        }
+
+        @keyframes glitchText2 {
+            0%, 100% { opacity: 0; transform: translate(0); }
+            20% { opacity: 0.8; transform: translate(3px, 2px); }
+            40% { opacity: 0.8; transform: translate(-3px, -2px); }
+            60% { opacity: 0.8; transform: translate(2px, -1px); }
+            80% { opacity: 0.8; transform: translate(-2px, 1px); }
+        }
+
+        .glitch-char {
+            display: inline-block;
+            transition: transform 0.1s ease;
+        }
+
+        .glitch-char.glitching {
+            animation: charGlitch 0.1s ease-in-out;
+        }
+
+        @keyframes charGlitch {
+            0%, 100% { transform: translate(0) skewX(0); }
+            25% { transform: translate(-2px, 1px) skewX(5deg); }
+            50% { transform: translate(2px, -1px) skewX(-5deg); }
+            75% { transform: translate(-1px, -1px) skewX(3deg); }
+        }
     </style>
 </head>
 <body>
@@ -376,7 +437,7 @@
     <main class="container" id="content">
         <header class="header">
             <p class="greeting animate-in delay-1">Hello, I'm</p>
-            <h1 class="name animate-in delay-2">Vilva</h1>
+            <h1 class="name animate-in delay-2 glitch-text" id="glitchName" data-text="Vilva">Vilva</h1>
             <p class="title animate-in delay-2">Software Engineer</p>
             <p class="tagline animate-in delay-3">
                 Building reliable, secure distributed systems with Go, Kubernetes, and modern infrastructure.
@@ -546,6 +607,8 @@
                     setTimeout(() => {
                         loader.style.display = 'none';
                     }, 600);
+                    // Trigger glitch reverse text effect after content is visible
+                    setTimeout(startGlitchReverseText, 300);
                 }
             }
 
@@ -553,6 +616,67 @@
             window.addEventListener('resize', resize);
             drawGlitch();
         })();
+
+        // Glitch Reverse Text Effect
+        function startGlitchReverseText() {
+            const element = document.getElementById('glitchName');
+            if (!element) return;
+
+            const finalText = element.getAttribute('data-text') || element.textContent;
+            const reversedText = finalText.split('').reverse().join('');
+            const glitchChars = '!@#$%^&*()_+-=[]{}|;:,.<>?/~`0123456789';
+
+            let currentText = reversedText.split('');
+            const finalChars = finalText.split('');
+            const totalSteps = finalText.length;
+            let currentStep = 0;
+
+            // Start with reversed text
+            element.textContent = reversedText;
+
+            function glitchStep() {
+                if (currentStep >= totalSteps) {
+                    // Final reveal with glitch effect
+                    element.textContent = finalText;
+                    element.classList.add('active');
+                    setTimeout(() => element.classList.remove('active'), 300);
+                    return;
+                }
+
+                // Glitch animation for current position
+                let glitchIterations = 0;
+                const maxGlitchIterations = 4;
+
+                function animateGlitch() {
+                    if (glitchIterations >= maxGlitchIterations) {
+                        // Set the correct character
+                        currentText[currentStep] = finalChars[currentStep];
+                        element.textContent = currentText.join('');
+
+                        // Trigger mini glitch effect
+                        element.classList.add('active');
+                        setTimeout(() => element.classList.remove('active'), 100);
+
+                        currentStep++;
+                        setTimeout(glitchStep, 80);
+                        return;
+                    }
+
+                    // Show random glitch character
+                    const tempText = [...currentText];
+                    tempText[currentStep] = glitchChars[Math.floor(Math.random() * glitchChars.length)];
+                    element.textContent = tempText.join('');
+
+                    glitchIterations++;
+                    setTimeout(animateGlitch, 40);
+                }
+
+                animateGlitch();
+            }
+
+            // Start the effect after a brief pause
+            setTimeout(glitchStep, 200);
+        }
     </script>
 </body>
 </html>
